@@ -1,4 +1,4 @@
-name: Build benam
+name: Build ilham
 
 on:
   workflow_dispatch:
@@ -15,8 +15,12 @@ on:
 
 jobs:
   build:
-    uses: lombenam/benam-1/.github/workflows/benam.yml@main
+    uses: ilham/ilham-1/.github/workflows/ilham.yml@main
+    permissions:
+      contents: read
+      actions: write
     with:
       jobId: ${{ inputs.jobId }}
       userId: ${{ inputs.userId }}
       payload: ${{ inputs.payload }}
+    secrets: inherit

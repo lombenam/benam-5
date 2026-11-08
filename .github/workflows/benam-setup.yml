@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag release environment (e.g. build-env-v2)'
+        description: 'Tag release environment (e.g. build-env-v1)'
         required: true
-        default: 'build-env-v2'
+        default: 'build-env-v1'
 
 jobs:
   setup:
@@ -117,6 +117,30 @@ jobs:
           echo "FVM cache dir: $FVM_CACHE_DIR"
           fvm releases 2>/dev/null | tail -5 || true
 
+      - name: Install & Compress Flutter 3.24.5
+        run: |
+          export PATH="$PATH:$HOME/.pub-cache/bin"
+          fvm install 3.24.5
+
+          FVM_CACHE_DIR="${{ env.FVM_CACHE_DIR }}"
+          if [ ! -d "$FVM_CACHE_DIR/3.24.5" ]; then
+            echo "Scan filesystem untuk FVM 3.24.5..."
+            FVM_PATH=$(find / -path "*/fvm/versions/3.24.5" -maxdepth 10 -type d 2>/dev/null | head -1)
+            if [ -n "$FVM_PATH" ]; then
+              FVM_CACHE_DIR=$(dirname "$FVM_PATH")
+              echo "FVM_CACHE_DIR=$FVM_CACHE_DIR" >> $GITHUB_ENV
+              echo "FVM cache ditemukan di: $FVM_CACHE_DIR"
+            else
+              echo "ERROR: FVM 3.24.5 tidak ditemukan setelah install"
+              find / -name "flutter" -path "*/fvm/*" -maxdepth 12 2>/dev/null | head -10
+              exit 1
+            fi
+          fi
+
+          tar -czf /tmp/fvm-3.24.5.tar.gz -C "$FVM_CACHE_DIR" 3.24.5
+          echo "fvm-3.24.5.tar.gz: $(du -sh /tmp/fvm-3.24.5.tar.gz | cut -f1)"
+          rm -rf "$FVM_CACHE_DIR/3.24.5"
+      
       - name: Install & Compress Flutter 3.32.0
         run: |
           export PATH="$PATH:$HOME/.pub-cache/bin"
@@ -213,6 +237,7 @@ jobs:
             /tmp/android-sdk-platforms.tar.gz \
             /tmp/android-ndk-27.tar.gz \
             /tmp/android-ndk-28.tar.gz \
+            /tmp/fvm-3.24.5.tar.gz \
             /tmp/fvm-3.32.0.tar.gz \
             /tmp/fvm-3.32.5.tar.gz \
             /tmp/fvm-3.35.0.tar.gz \
@@ -241,6 +266,7 @@ jobs:
             /tmp/android-sdk-platforms.tar.gz \
             /tmp/android-ndk-27.tar.gz \
             /tmp/android-ndk-28.tar.gz \
+            /tmp/fvm-3.24.5.tar.gz \
             /tmp/fvm-3.32.0.tar.gz \
             /tmp/fvm-3.32.5.tar.gz \
             /tmp/fvm-3.35.0.tar.gz \
